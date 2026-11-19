@@ -2,85 +2,92 @@
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>식단표 중복 검수</title>
 <style>
-:root{--bg:#f2f5f1;--ink:#1d2a24;--sub:#5b6a62;--line:#d3dbd2;--ac:#1e6b4e;--card:#fff}
-@media(prefers-color-scheme:dark){:root{--bg:#161d19;--ink:#e6eee9;--sub:#9fb0a6;--line:#2e3b34;--ac:#5cc79b;--card:#1f2823}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;padding:20px;max-width:1100px;margin:auto}
-h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 8px}p.s{color:var(--sub);margin:0 0 14px}
-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
-button,.btn{font:inherit;background:var(--ac);color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer}
+:root{--bg:#f2f5f1;--ink:#1d2a24;--sub:#5b6a62;--line:#d3dbd2;--ac:#1e6b4e;--card:#fff;--soft:#e2eee7}
+@media(prefers-color-scheme:dark){:root{--bg:#161d19;--ink:#e6eee9;--sub:#9fb0a6;--line:#2e3b34;--ac:#5cc79b;--card:#1f2823;--soft:#27372f}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.in{max-width:1180px;margin:auto;padding:10px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 28px}
+h1{font-size:18px;margin:0}nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:none;color:var(--sub);padding:7px 14px;font-weight:600}
+nav button[aria-selected=true]{background:var(--soft);color:var(--ac)}
+main{max-width:1180px;margin:auto;padding:18px 20px}
+.tab{display:none}.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:start}
+.g2>.card{margin-bottom:0}.g2{margin-bottom:14px}
+.main{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.main:has(#panel:not([hidden])){grid-template-columns:minmax(0,1fr) 350px}
+@media(max-width:900px){.main:has(#panel:not([hidden])){grid-template-columns:minmax(0,1fr)}}
+#panel{position:sticky;top:64px;align-self:start;max-height:calc(100vh - 80px);overflow:auto}
+button,.btn{font:inherit;background:var(--ac);color:var(--card);border:0;border-radius:6px;padding:7px 12px;cursor:pointer}
 button.g,.btn.g{background:transparent;color:var(--ac);border:1px solid var(--ac)}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 input[type=text],input[type=number],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
-input[type=number]{width:56px}textarea{width:100%;height:90px}
-button:focus-visible,input:focus-visible,textarea:focus-visible,.chip:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+input[type=number]{width:60px}textarea{width:100%;height:90px;margin:8px 0}
+details summary{cursor:pointer;color:var(--ac);font-weight:600;margin-top:10px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,.chip:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.tip{width:20px;height:20px;border-radius:50%;padding:0;background:var(--soft);color:var(--ac);font-size:12px;font-weight:700;border:1px solid var(--line)}
+#tt{position:absolute;z-index:20;width:330px;max-width:calc(100vw - 16px);background:var(--ink);color:var(--bg);padding:10px 13px;border-radius:8px;font-size:13px;white-space:pre-line;box-shadow:0 4px 16px #0004}
 .wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}
 th,td{border:1px solid var(--line);padding:5px;vertical-align:top;text-align:left}th{background:var(--bg)}td.l{font-weight:600;white-space:nowrap;background:var(--bg)}
 .chip{display:block;margin:2px 0;padding:3px 7px;border-radius:5px;border:1px solid transparent;cursor:pointer;font-size:14px}
 .chip small{display:block;font-size:12px;opacity:.85}.chip.sel{outline:2px solid var(--ink)}
 .iss{border-left:5px solid;padding:6px 10px;margin:6px 0;background:var(--bg);border-radius:0 6px 6px 0}
-.alt{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.alt{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
 .ok{color:var(--ac);font-weight:600}.sub{color:var(--sub);font-size:13px}
 </style></head><body>
-<h1>식단표 중복 검수</h1>
-<p class="s">주재료가 겹치는 메뉴를 찾아 표시하고, 대체 메뉴를 추천합니다. 파일은 외부로 전송되지 않고 이 브라우저 안에서만 처리됩니다.</p>
+<header><div class="in"><h1>식단표 중복 검수</h1>
+<nav role="tablist"><button data-t="t1" aria-selected="true">식단표 검수</button><button data-t="t2" aria-selected="false">기준 설정</button><button data-t="t3" aria-selected="false">데이터 관리</button></nav></div></header>
+<main>
 
-<section>
-<h2>1. 식단표 불러오기</h2>
-<div class="row">
-<label class="btn">엑셀 파일 선택<input id="f" type="file" accept=".xlsx,.xls,.csv" hidden></label>
-<button class="g" id="sample">예시로 해보기</button>
-<button class="g" id="flip">행·열 바꾸기</button>
+<div class="tab on" id="t1">
+<div class="g2">
+<div class="card"><h2>식단표 불러오기 <button class="tip" type="button" aria-label="도움말" data-tip="첫 줄이 요일, 첫 칸이 구분(밥·국·주찬…)인 표여야 합니다.&#10;요일이 세로로 되어 있으면 '행·열 바꾸기'를 누르세요.&#10;한글(hwp)은 표를 드래그해 복사한 뒤 '붙여넣기로 불러오기'를 쓰면 됩니다.&#10;파일은 외부로 전송되지 않고 이 브라우저 안에서만 처리됩니다.">?</button></h2>
+<div class="row"><label class="btn">엑셀 파일 선택<input id="f" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+<button class="g" id="sample">예시로 해보기</button><button class="g" id="flip">행·열 바꾸기</button></div>
+<details><summary>붙여넣기로 불러오기</summary><textarea id="paste" placeholder="한글·엑셀에서 복사한 표를 붙여넣으세요"></textarea><button id="go">붙여넣은 표 불러오기</button></details></div>
+<div class="card"><h2>중복 기준 <button class="tip" type="button" aria-label="도움말" data-tip="같은 주재료가 한 주에 N회 이상이면 중복으로 표시합니다.&#10;같은 날·연속된 날 옵션을 켜면 더 엄격하게 검사합니다.&#10;분류별 횟수 규칙은 '기준 설정' 탭에서 정합니다.">?</button></h2>
+<div class="row"><label>같은 주재료 <input type="number" id="n" value="2" min="2"> 회 이상</label>
+<label><input type="checkbox" id="same" checked> 같은 날</label>
+<label><input type="checkbox" id="cons" checked> 연속된 날</label></div></div>
 </div>
-<p class="sub">표 형태: 첫 줄이 요일, 첫 칸이 구분(밥·국·주찬…)이어야 합니다. 요일이 세로로 되어 있으면 '행·열 바꾸기'를 누르세요.<br>한글(hwp)에서는 표를 드래그해 복사한 뒤 아래 칸에 붙여넣으면 됩니다.</p>
-<textarea id="paste" placeholder="여기에 식단표를 붙여넣고 아래 버튼을 누르세요"></textarea>
-<button id="go" style="margin-top:6px">붙여넣은 표 불러오기</button>
-</section>
-
-<section>
-<h2>2. 중복 기준</h2>
-<div class="row">
-<label>같은 주재료가 <input type="number" id="n" value="2" min="2"> 회 이상</label>
-<label><input type="checkbox" id="same" checked> 같은 날 중복</label>
-<label><input type="checkbox" id="cons" checked> 연속된 날 중복</label>
+<div class="main"><div>
+<div class="card"><h2>검수 결과 <button class="tip" type="button" aria-label="도움말" data-tip="메뉴를 누르면 오른쪽에 재료 수정과 대체 메뉴 추천이 나옵니다.&#10;같은 색은 같은 재료(분류)가 겹친다는 뜻입니다.&#10;메뉴에 마우스를 올리면 중복 사유가 보입니다.">?</button></h2>
+<div id="out"><p class="sub">식단표를 불러오면 결과가 여기에 나타납니다.</p></div></div>
+<div class="card" id="unk" hidden></div>
 </div>
-</section>
+<aside class="card" id="panel" hidden></aside></div>
+</div>
 
-<section><h2>분류별 주간 횟수 규칙</h2>
-<p class="sub">한 주 동안 해당 분류의 메뉴가 몇 번 나와야 하는지 정합니다. 비워 두면 제한하지 않습니다. 대체 메뉴 추천에도 이 규칙이 적용됩니다.</p>
-<div class="wrap" id="rules"></div></section>
-
-<section><h2>재료 분류 편집</h2>
-<p class="sub">재료가 어느 분류(생선류, 육류 등)에 속하는지 정합니다. 새 분류 이름을 입력하면 위 규칙 표에 자동으로 추가되고, 비우면 분류하지 않습니다.</p>
-<div class="row"><input type="text" id="cf" placeholder="재료 검색"><input type="text" id="cn" placeholder="새 재료"><input type="text" id="cc" list="catlist" placeholder="분류"><button id="ca">재료 추가</button></div>
+<div class="tab" id="t2">
+<div class="g2">
+<div class="card"><h2>분류별 주간 횟수 규칙 <button class="tip" type="button" aria-label="도움말" data-tip="한 주 동안 해당 분류의 메뉴가 몇 번 나와야 하는지 정합니다.&#10;비워 두면 제한하지 않습니다.&#10;대체 메뉴 추천에도 이 규칙이 적용됩니다.">?</button></h2>
+<div class="wrap" id="rules"></div></div>
+<div class="card"><h2>재료 분류 편집 <button class="tip" type="button" aria-label="도움말" data-tip="재료가 어느 분류(생선류, 육류 등)에 속하는지 정합니다.&#10;새 분류 이름을 쓰면 왼쪽 규칙 표에 자동으로 추가됩니다.&#10;분류를 비우면 분류하지 않습니다.">?</button></h2>
+<div class="row"><input type="text" id="cf" placeholder="재료 검색" size="10"><input type="text" id="cn" placeholder="새 재료" size="10"><input type="text" id="cc" list="catlist" placeholder="분류" size="10"><button id="ca">추가</button></div>
 <datalist id="catlist"></datalist>
-<div class="wrap" id="cats" style="max-height:300px;overflow:auto;margin-top:8px"></div></section>
+<div class="wrap" id="cats" style="max-height:340px;overflow:auto;margin-top:8px"></div></div>
+</div></div>
 
-<section><h2>3. 검수 결과</h2><div id="out"><p class="sub">식단표를 불러오면 결과가 여기에 나타납니다.</p></div></section>
-<section id="panel" hidden></section>
-<section id="unk" hidden></section>
-
-<section>
-<h2>구글 스프레드시트 연결</h2>
-<p class="sub">시트의 각 탭을 '웹에 게시'한 CSV 링크를 붙여넣으면 레시피와 재료 분류를 불러옵니다. 앱은 시트를 읽기만 하며, 시트를 고친 뒤에는 '시트에서 불러오기'를 누르세요. 링크는 이 브라우저에 저장되어 앱을 열 때 자동으로 불러옵니다.</p>
+<div class="tab" id="t3">
+<div class="g2">
+<div class="card"><h2>구글 스프레드시트 연결 <button class="tip" type="button" aria-label="도움말" data-tip="1) 시트에 탭 2개 만들기&#10;   레시피: 메뉴명 | 주재료 | 조리법 | 종류&#10;   재료분류: 재료 | 분류&#10;2) 파일 → 공유 → 웹에 게시&#10;3) 탭 하나 선택, 형식을 CSV로 → 게시 → 링크 복사 (탭마다 반복)&#10;4) 아래 칸에 붙여넣고 '시트에서 불러오기'&#10;※ 앱은 시트를 읽기만 합니다.&#10;※ 게시된 시트는 링크를 아는 누구나 볼 수 있으니 개인정보는 넣지 마세요.">?</button></h2>
 <div class="row" style="flex-direction:column;align-items:stretch">
 <label>레시피 탭 링크 <input type="text" id="u1" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label>
 <label>재료 분류 탭 링크 <input type="text" id="u2" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label></div>
-<div class="row" style="margin-top:8px"><button id="sy">시트에서 불러오기</button><span id="sm" class="sub"></span></div>
-</section>
-
-<section>
-<h2>레시피 DB</h2>
-<p class="sub">엑셀(.xlsx) 또는 UTF-8 CSV로 메뉴를 한꺼번에 등록합니다. 열 이름은 메뉴명, 주재료, 조리법, 종류(주찬/부찬/국)이고, 재료가 여러 개면 / 또는 쉼표로 구분합니다. 등록된 메뉴: <b id="dbn">0</b>개</p>
-<div class="row"><label class="btn">레시피 엑셀 올리기<input id="rf" type="file" accept=".xlsx,.xls,.csv" hidden></label>
-<button class="g" id="tpl">양식 내려받기</button><button class="g" id="dbclr">DB 비우기</button></div>
-</section>
-
-<section>
-<h2>백업 (레시피 DB · 규칙 · 메뉴 사전)</h2>
-<p class="sub">직접 입력한 재료 정보는 이 브라우저에 저장됩니다. 브라우저 데이터를 지우기 전에 내보내기로 백업하세요.</p>
+<div class="row" style="margin-top:10px"><button id="sy">시트에서 불러오기</button><span id="sm" class="sub"></span></div></div>
+<div class="card"><h2>레시피 DB 엑셀 등록 <button class="tip" type="button" aria-label="도움말" data-tip="엑셀(.xlsx) 또는 UTF-8 CSV로 메뉴를 한꺼번에 등록합니다.&#10;열 이름: 메뉴명, 주재료, 조리법, 종류(주찬/부찬/국)&#10;재료가 여러 개면 / 또는 쉼표로 구분합니다.&#10;'양식 내려받기'로 예시 파일을 받을 수 있습니다.">?</button></h2>
+<p class="sub" style="margin-top:0">등록된 메뉴 <b id="dbn">0</b>개</p>
+<div class="row"><label class="btn">엑셀 올리기<input id="rf" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+<button class="g" id="tpl">양식 내려받기</button><button class="g" id="dbclr">DB 비우기</button></div></div>
+<div class="card"><h2>백업 · 복원 <button class="tip" type="button" aria-label="도움말" data-tip="레시피 DB, 규칙, 재료 분류, 직접 입력한 메뉴 재료가 모두 담깁니다.&#10;이 정보는 브라우저에 저장되므로, 브라우저 데이터를 지우기 전에 내보내기로 백업하세요.">?</button></h2>
 <div class="row"><button class="g" id="exp">내보내기</button>
-<label class="btn g">가져오기<input id="imp" type="file" accept=".json" hidden></label></div>
-</section>
+<label class="btn g">가져오기<input id="imp" type="file" accept=".json" hidden></label></div></div>
+</div></div>
+
+</main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -285,6 +292,15 @@ async function sync(){
  }catch(e){st.textContent='불러오지 못했습니다. "웹에 게시"한 CSV 링크인지, 첫 줄 열 이름이 맞는지 확인해 주세요.'}
 }
 $('#sy').onclick=sync;
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x==b));
+ document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==b.dataset.t))});
+const tt=document.createElement('div');tt.id='tt';tt.hidden=true;document.body.appendChild(tt);
+document.addEventListener('click',e=>{const t=e.target.closest('.tip');
+ if(!t||(!tt.hidden&&tt.dataset.o==t.dataset.tip)){tt.hidden=true;tt.dataset.o='';return}
+ tt.textContent=t.dataset.tip;tt.dataset.o=t.dataset.tip;tt.hidden=false;
+ const r=t.getBoundingClientRect();tt.style.top=(r.bottom+scrollY+6)+'px';
+ tt.style.left=Math.max(8,Math.min(r.left+scrollX,innerWidth-346))+'px'},true);
 syncRules();rulesUI();catUI();dbn();
 try{const u=JSON.parse(localStorage.getItem('mealurls')||'[]');$('#u1').value=u[0]||'';$('#u2').value=u[1]||'';if(u[0]||u[1])sync()}catch(e){}
 </script></body></html>
