@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>식단표 중복 검수</title>
+<style>
+:root{--bg:#f2f5f1;--ink:#1d2a24;--sub:#5b6a62;--line:#d3dbd2;--ac:#1e6b4e;--card:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#161d19;--ink:#e6eee9;--sub:#9fb0a6;--line:#2e3b34;--ac:#5cc79b;--card:#1f2823}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;padding:20px;max-width:1100px;margin:auto}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:0 0 8px}p.s{color:var(--sub);margin:0 0 14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+button,.btn{font:inherit;background:var(--ac);color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer}
+button.g,.btn.g{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=text],input[type=number],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+input[type=number]{width:56px}textarea{width:100%;height:90px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,.chip:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{border:1px solid var(--line);padding:5px;vertical-align:top;text-align:left}th{background:var(--bg)}td.l{font-weight:600;white-space:nowrap;background:var(--bg)}
+.chip{display:block;margin:2px 0;padding:3px 7px;border-radius:5px;border:1px solid transparent;cursor:pointer;font-size:14px}
+.chip small{display:block;font-size:12px;opacity:.85}.chip.sel{outline:2px solid var(--ink)}
+.iss{border-left:5px solid;padding:6px 10px;margin:6px 0;background:var(--bg);border-radius:0 6px 6px 0}
+.alt{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.ok{color:var(--ac);font-weight:600}.sub{color:var(--sub);font-size:13px}
+</style></head><body>
+<h1>식단표 중복 검수</h1>
+<p class="s">주재료가 겹치는 메뉴를 찾아 표시하고, 대체 메뉴를 추천합니다. 파일은 외부로 전송되지 않고 이 브라우저 안에서만 처리됩니다.</p>
+
+<section>
+<h2>1. 식단표 불러오기</h2>
+<div class="row">
+<label class="btn">엑셀 파일 선택<input id="f" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+<button class="g" id="sample">예시로 해보기</button>
+<button class="g" id="flip">행·열 바꾸기</button>
+</div>
+<p class="sub">표 형태: 첫 줄이 요일, 첫 칸이 구분(밥·국·주찬…)이어야 합니다. 요일이 세로로 되어 있으면 '행·열 바꾸기'를 누르세요.<br>한글(hwp)에서는 표를 드래그해 복사한 뒤 아래 칸에 붙여넣으면 됩니다.</p>
+<textarea id="paste" placeholder="여기에 식단표를 붙여넣고 아래 버튼을 누르세요"></textarea>
+<button id="go" style="margin-top:6px">붙여넣은 표 불러오기</button>
+</section>
+
+<section>
+<h2>2. 중복 기준</h2>
+<div class="row">
+<label>같은 주재료가 <input type="number" id="n" value="2" min="2"> 회 이상</label>
+<label><input type="checkbox" id="same" checked> 같은 날 중복</label>
+<label><input type="checkbox" id="cons" checked> 연속된 날 중복</label>
+</div>
+</section>
+
+<section><h2>분류별 주간 횟수 규칙</h2>
+<p class="sub">한 주 동안 해당 분류의 메뉴가 몇 번 나와야 하는지 정합니다. 비워 두면 제한하지 않습니다. 대체 메뉴 추천에도 이 규칙이 적용됩니다.</p>
+<div class="wrap" id="rules"></div></section>
+
+<section><h2>재료 분류 편집</h2>
+<p class="sub">재료가 어느 분류(생선류, 육류 등)에 속하는지 정합니다. 새 분류 이름을 입력하면 위 규칙 표에 자동으로 추가되고, 비우면 분류하지 않습니다.</p>
+<div class="row"><input type="text" id="cf" placeholder="재료 검색"><input type="text" id="cn" placeholder="새 재료"><input type="text" id="cc" list="catlist" placeholder="분류"><button id="ca">재료 추가</button></div>
+<datalist id="catlist"></datalist>
+<div class="wrap" id="cats" style="max-height:300px;overflow:auto;margin-top:8px"></div></section>
+
+<section><h2>3. 검수 결과</h2><div id="out"><p class="sub">식단표를 불러오면 결과가 여기에 나타납니다.</p></div></section>
+<section id="panel" hidden></section>
+<section id="unk" hidden></section>
+
+<section>
+<h2>구글 스프레드시트 연결</h2>
+<p class="sub">시트의 각 탭을 '웹에 게시'한 CSV 링크를 붙여넣으면 레시피와 재료 분류를 불러옵니다. 앱은 시트를 읽기만 하며, 시트를 고친 뒤에는 '시트에서 불러오기'를 누르세요. 링크는 이 브라우저에 저장되어 앱을 열 때 자동으로 불러옵니다.</p>
+<div class="row" style="flex-direction:column;align-items:stretch">
+<label>레시피 탭 링크 <input type="text" id="u1" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label>
+<label>재료 분류 탭 링크 <input type="text" id="u2" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label></div>
+<div class="row" style="margin-top:8px"><button id="sy">시트에서 불러오기</button><span id="sm" class="sub"></span></div>
+</section>
+
+<section>
+<h2>레시피 DB</h2>
+<p class="sub">엑셀(.xlsx) 또는 UTF-8 CSV로 메뉴를 한꺼번에 등록합니다. 열 이름은 메뉴명, 주재료, 조리법, 종류(주찬/부찬/국)이고, 재료가 여러 개면 / 또는 쉼표로 구분합니다. 등록된 메뉴: <b id="dbn">0</b>개</p>
+<div class="row"><label class="btn">레시피 엑셀 올리기<input id="rf" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+<button class="g" id="tpl">양식 내려받기</button><button class="g" id="dbclr">DB 비우기</button></div>
+</section>
+
+<section>
+<h2>백업 (레시피 DB · 규칙 · 메뉴 사전)</h2>
+<p class="sub">직접 입력한 재료 정보는 이 브라우저에 저장됩니다. 브라우저 데이터를 지우기 전에 내보내기로 백업하세요.</p>
+<div class="row"><button class="g" id="exp">내보내기</button>
+<label class="btn g">가져오기<input id="imp" type="file" accept=".json" hidden></label></div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const DICT="돼지고기:제육,돈까스,돈가스,돈육,삼겹,목살,수육,보쌈,탕수육,동그랑땡,돼지,폭립|소고기:소고기,쇠고기,불고기,장조림,소갈비,갈비탕,갈비찜,육개장,떡갈비,너비아니,미트볼,소불고기,설렁탕,곰탕,소고기|닭고기:닭,치킨,계육,너겟|오리고기:오리고기,오리훈제,훈제오리,오리주물럭|계란:계란,달걀,에그,오믈렛,스크램블,지단|두부:두부|어묵:어묵,오뎅|가공육:스팸,소시지,햄,비엔나,베이컨|참치:참치|고등어:고등어|갈치:갈치|삼치:삼치|조기:조기|명태:동태,명태,북어,황태,코다리|연어:연어|오징어:오징어|새우:새우|멸치:멸치|감자:감자|버섯:버섯|해물:해물,낙지,쭈꾸미|생선:생선,가자미,대구,임연수,꽁치,아귀";
+const POOLTXT="두부조림:두부:주|연어스테이크:연어:주|고등어구이:고등어:주|삼치구이:삼치:주|오징어볶음:오징어:주|새우튀김:새우:주|닭갈비:닭고기:주|소불고기:소고기:주|제육볶음:돼지고기:주|오리불고기:오리고기:주|해물파전:해물:주|갈치조림:갈치:주|동태전:명태:주|참치전:참치:주|닭봉구이:닭고기:주|돈까스:돼지고기:주|함박스테이크:소고기,돼지고기:주|가자미구이:생선:주|떡갈비:소고기:주|어묵볶음:어묵:부|소시지야채볶음:가공육:부|감자채볶음:감자:부|버섯볶음:버섯:부|두부부침:두부:부|멸치볶음:멸치:부|계란말이:계란:부|계란찜:계란:부|시금치나물::부|콩나물무침::부|도라지무침::부|애호박볶음::부|브로콜리숙회::부|미역줄기볶음::부|북엇국:명태:국|소고기무국:소고기:국|닭곰탕:닭고기:국|두부된장찌개:두부:국|감자국:감자:국|어묵탕:어묵:국|계란국:계란:국|버섯들깨탕:버섯:국|순두부찌개:두부:국|미역국::국|콩나물국::국|맑은무국::국|시금치된장국::국";
+const D=DICT.split('|').map(s=>{const[i,k]=s.split(':');return[i,k.split(',')]});
+const POOL=POOLTXT.split('|').map(s=>{const[n,i,t]=s.split(':');return{n,i:i?i.split(','):[],t}});
+const PM={};POOL.forEach(p=>PM[p.n]=p.i);
+const SKIP=/밥|김치|깍두기|샐러드|우유|과일|요구르트|요거트|주스|후식|간식|누룽지/;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ST={grid:[],M:[],sel:null,mem:{}};
+ST.db={};ST.rules=[['생선류',1,2],['육류',0,3],['콩·두부류',1,''],['난류',0,''],['튀김',0,1]];
+try{ST.mem=JSON.parse(localStorage.getItem('mealmem')||'{}');ST.db=JSON.parse(localStorage.getItem('mealdb')||'{}');const r=localStorage.getItem('mealrules');if(r)ST.rules=JSON.parse(r)}catch(e){}
+const save=()=>{try{localStorage.setItem('mealmem',JSON.stringify(ST.mem));localStorage.setItem('mealdb',JSON.stringify(ST.db));localStorage.setItem('mealrules',JSON.stringify(ST.rules));localStorage.setItem('mealcat',JSON.stringify(ST.cat))}catch(e){}};
+const CAT={'생선류':'고등어,갈치,삼치,조기,명태,연어,참치,생선,오징어,새우,해물,멸치,어묵','육류':'돼지고기,소고기,닭고기,오리고기,가공육','콩·두부류':'두부','난류':'계란'};
+ST.cat={};for(const c in CAT)CAT[c].split(',').forEach(i=>ST.cat[i]=c);
+try{const c=localStorage.getItem('mealcat');if(c)ST.cat=JSON.parse(c)}catch(e){}
+const fry=n=>/튀김/.test((ST.db[n]||{}).m||'')||/튀김|까스|가스|너겟|강정|탕수|프라이|커틀릿/.test(n);
+const cats=n=>{const s=new Set(ings(n).map(i=>ST.cat[i]).filter(Boolean));if(fry(n))s.add('튀김');return[...s]};
+const cnt=ms=>{const c={};ms.forEach(m=>cats(m.name).forEach(k=>c[k]=(c[k]||0)+1));return c};
+const viol=(c,onlyMax)=>{const v=[];ST.rules.forEach(([k,mn,mx])=>{const n=c[k]||0;if(mx!==''&&n>mx)v.push(k+' '+n+'회(최대 '+mx+')');if(!onlyMax&&mn!==''&&n<mn)v.push(k+' '+n+'회(최소 '+mn+')')});return v};
+const normI=t=>{const d=D.find(([i,ks])=>i==t||ks.some(k=>t.includes(k)));return d?d[0]:t};
+const clean=n=>n.replace(/\([^)]*\)/g,'').replace(/[\d.,*#①-⑲]+$/,'').replace(/\s+/g,' ').trim();
+function ings(n){
+ if(ST.mem[n]!==undefined)return ST.mem[n];
+ if(ST.db[n])return ST.db[n].i;
+ if(SKIP.test(n))return[];
+ if(PM[n])return PM[n];
+ return D.filter(([i,ks])=>ks.some(k=>n.includes(k))).map(d=>d[0]);
+}
+const known=n=>ST.mem[n]!==undefined||ST.db[n]||SKIP.test(n)||PM[n]||D.some(([i,ks])=>ks.some(k=>n.includes(k)));
+
+function parseTSV(t){const R=[];let row=[],c='',q=false;
+ for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+  else if(ch=='"'&&!c)q=true;
+  else if(ch=='\t'){row.push(c);c=''}
+  else if(ch=='\n'){row.push(c);R.push(row);row=[];c=''}
+  else if(ch!='\r')c+=ch}
+ row.push(c);R.push(row);return R}
+function load(g){
+ g=g.filter(r=>r.some(x=>String(x??'').trim()));
+ if(g.length<2){alert('표를 읽지 못했습니다. 첫 줄은 요일, 첫 칸은 구분이어야 합니다.');return}
+ const w=Math.max(...g.map(r=>r.length));
+ ST.grid=g.map(r=>Array.from({length:w},(_,i)=>String(r[i]??'')));
+ ST.sel=null;run();
+}
+function analyze(){
+ const g=ST.grid,M=[];
+ for(let r=1;r<g.length;r++)for(let c=1;c<g[r].length;c++)
+  g[r][c].split('\n').forEach((raw,li)=>{const name=clean(raw);if(name)M.push({r,c,li,name,ings:ings(name),why:[]})});
+ const N=+$('#n').value||2,by={},iss=[];
+ M.forEach(m=>m.ings.forEach(i=>(by[i]=by[i]||[]).push(m)));
+ for(const[ing,ms]of Object.entries(by)){
+  const add=(why,l)=>{iss.push({ing,why,ms:l});l.forEach(m=>m.why.push(ing+' · '+why))};
+  if(ms.length>=N)add('주 '+ms.length+'회',ms);
+  const cols={};ms.forEach(m=>(cols[m.c]=cols[m.c]||[]).push(m));
+  if($('#same').checked)for(const c in cols)if(cols[c].length>1)add('같은 날 중복',cols[c]);
+  if($('#cons').checked)Object.keys(cols).map(Number).forEach(c=>{if(cols[c+1])add('연속일',[...cols[c],...cols[c+1]])});
+ }
+ const rc=cnt(M);
+ ST.rules.forEach(([k,mn,mx])=>{if(mx!==''&&(rc[k]||0)>mx)M.filter(m=>cats(m.name).includes(k)).forEach(m=>m.why.push(k+' · 최대 '+mx+'회 초과'))});
+ ST.M=M;ST.iss=iss;
+}
+const hue=(ing)=>[...ing].reduce((a,c)=>a+c.charCodeAt(0),0)*37%360;
+function run(){
+ analyze();const g=ST.grid;
+ const bad=ST.M.filter(m=>m.why.length).length;
+ let h=bad?`<p><b>${bad}개 메뉴</b>에서 중복이 발견되었습니다. 메뉴를 누르면 재료 수정과 대체 메뉴 추천이 나옵니다.</p>`:`<p class="ok">설정한 기준에 걸리는 중복이 없습니다.</p>`;
+ const grp={};ST.iss.forEach(x=>{const o=grp[x.ing]=grp[x.ing]||{w:new Set(),m:new Set()};o.w.add(x.why);x.ms.forEach(m=>o.m.add(m))});
+ for(const ing in grp){const hu=hue(ing);
+  const list=[...grp[ing].m].sort((a,b)=>a.c-b.c).map(m=>g[0][m.c]+' '+esc(m.name)).join(', ');
+  h+=`<div class="iss" style="border-color:hsl(${hu} 55% 42%)"><b>${esc(ing)}</b> <span class="sub">${[...grp[ing].w].join(', ')}</span><br>${list}</div>`}
+ h+=rulesHtml()+'<div class="wrap"><table><tr>'+g[0].map(x=>`<th>${esc(x)}</th>`).join('')+'</tr>';
+ for(let r=1;r<g.length;r++){
+  h+=`<tr><td class="l">${esc(g[r][0])}</td>`;
+  for(let c=1;c<g[0].length;c++){
+   h+='<td>'+ST.M.map((m,i)=>[m,i]).filter(([m])=>m.r==r&&m.c==c).map(([m,i])=>{
+    const b=m.why.length,hu=b?hue(m.why[0].split(' · ')[0]):0;
+    const st=b?`background:hsl(${hu} 80% 86%);border-color:hsl(${hu} 55% 42%);color:#1d2a24`:'';
+    return `<div class="chip${ST.sel==i?' sel':''}" tabindex="0" data-i="${i}" style="${st}" title="${esc(m.why.join('\n'))}">${esc(m.name)}${b?`<small>${esc(m.ings.join(', '))}</small>`:''}</div>`}).join('')+'</td>'}
+  h+='</tr>'}
+ $('#out').innerHTML=h+'</table></div>';
+ const un=[...new Set(ST.M.filter(m=>!known(m.name)).map(m=>m.name))];
+ const u=$('#unk');u.hidden=!un.length;
+ if(un.length)u.innerHTML=`<h2>재료를 인식하지 못한 메뉴 ${un.length}개</h2><p class="sub">누르면 재료를 입력할 수 있습니다. 한 번 입력하면 저장되어 다음부터 자동 인식됩니다.</p><div class="row">`+un.map(n=>{const i=ST.M.findIndex(m=>m.name==n);return `<button class="g chip" data-i="${i}" style="display:inline-block">${esc(n)}</button>`}).join('')+'</div>';
+ panel();
+}
+function rowType(m){const t=ST.grid[m.r][0]+m.name;return/국|탕|찌개/.test(t)?'국':/부|반찬|나물|무침|볶음/.test(ST.grid[m.r][0])?'부':'주'}
+function panel(){
+ const p=$('#panel'),m=ST.M[ST.sel];
+ if(!m){p.hidden=true;return}
+ const used=new Set();ST.M.forEach(x=>{if(x!==m)x.ings.forEach(i=>used.add(i))});
+ const names=new Set(ST.M.map(x=>x.name)),t=rowType(m),rest=ST.M.filter(x=>x!==m),rc=cnt(rest),need=ST.rules.filter(([k,mn])=>mn!==''&&(rc[k]||0)<mn).map(r=>r[0]);
+ const seen=new Set(),all=[...POOL,...Object.entries(ST.db).map(([n,d])=>({n,i:d.i,t:d.t||'주'}))];
+ const alts=all.filter(a=>a.t==t&&!names.has(a.n)&&!seen.has(a.n)&&seen.add(a.n)).map(a=>({...a,o:a.i.filter(i=>used.has(i)),v:viol(cnt(rest.concat({name:a.n})),1),h:cats(a.n).filter(k=>need.includes(k))}))
+  .sort((a,b)=>a.v.length-b.v.length||b.h.length-a.h.length||a.o.length-b.o.length).slice(0,5);
+ p.hidden=false;
+ p.innerHTML=`<h2>${esc(ST.grid[0][m.c])} · ${esc(ST.grid[m.r][0])}</h2>
+ <div class="row"><label>메뉴명 <input type="text" id="pn" value="${esc(m.name)}"></label>
+ <label>주재료(쉼표로 구분) <input type="text" id="pi" value="${esc(m.ings.join(', '))}"></label>
+ <button id="ps">저장</button></div>
+ <p class="sub">${m.why.length?esc([...new Set(m.why)].join(' / ')):'중복 없음'}. 재료가 없는 메뉴는 비워 두고 저장하세요.</p>
+ <h2 style="margin-top:12px">대체 메뉴 추천 (${t=='주'?'주찬':t=='부'?'부찬':'국'})</h2>`+
+ (alts.map(a=>`<div class="alt"><div><b>${esc(a.n)}</b> <span class="sub">${a.i.length?esc(a.i.join(', ')):'주재료 없음'}</span><br>${a.o.length?`<span class="sub">이번 주 사용 재료와 겹침: ${esc(a.o.join(', '))}</span>`:'<span class="ok">이번 주 재료와 겹치지 않음</span>'}${a.v.length?`<br><span style="color:#c2410c">규칙 위반: ${esc(a.v.join(', '))}</span>`:''}${a.h.length?`<br><span class="ok">부족한 ${esc(a.h.join(', '))} 보충</span>`:''}</div><button class="g" data-alt="${esc(a.n)}">이 메뉴로 교체</button></div>`).join('')||'<p class="sub">추천할 메뉴가 없습니다.</p>');
+}
+function setName(m,name){
+ const lines=ST.grid[m.r][m.c].split('\n');lines[m.li]=name;ST.grid[m.r][m.c]=lines.join('\n');
+}
+document.addEventListener('click',e=>{
+ const ch=e.target.closest('[data-i]');
+ if(ch){ST.sel=+ch.dataset.i;run();$('#panel').scrollIntoView({behavior:'smooth',block:'nearest'});return}
+ const a=e.target.closest('[data-alt]');
+ if(a){const m=ST.M[ST.sel];setName(m,a.dataset.alt);ST.sel=null;run();return}
+ if(e.target.id=='ps'){
+  const m=ST.M[ST.sel],nn=clean($('#pn').value)||m.name;
+  const l=$('#pi').value.split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+  ST.mem[nn]=l;save();if(nn!=m.name)setName(m,nn);
+  const idx=ST.M.length;ST.sel=null;run();
+ }
+});
+document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('chip'))e.target.click()});
+['n','same','cons'].forEach(id=>$('#'+id).addEventListener('change',()=>ST.grid.length&&run()));
+$('#f').onchange=e=>{
+ const f=e.target.files[0];if(!f)return;
+ if(typeof XLSX=='undefined'){alert('엑셀 읽기 모듈을 불러오지 못했습니다. 인터넷 연결을 확인하거나 표를 붙여넣어 주세요.');return}
+ const r=new FileReader();
+ r.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:'array'});
+  load(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}))};
+ r.readAsArrayBuffer(f);e.target.value='';
+};
+$('#go').onclick=()=>load(parseTSV($('#paste').value.trim()+'\n'));
+$('#flip').onclick=()=>{const g=ST.grid;if(!g.length)return;ST.grid=g[0].map((_,c)=>g.map(r=>r[c]));ST.sel=null;run()};
+$('#sample').onclick=()=>load([['구분','월','화','수','목','금'],
+ ['밥','잡곡밥','흑미밥','잡곡밥','쌀밥','콩밥'],
+ ['국','미역국','소고기무국','순두부찌개','북엇국','어묵탕'],
+ ['주찬','제육볶음','닭갈비','고등어구이','돈까스','소불고기'],
+ ['부찬','계란말이','두부조림','어묵볶음','감자채볶음','계란찜'],
+ ['김치','배추김치','깍두기','배추김치','깍두기','배추김치']]);
+$('#exp').onclick=()=>{const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([JSON.stringify({mem:ST.mem,db:ST.db,rules:ST.rules,cat:ST.cat})],{type:'application/json'}));
+ a.download='메뉴사전_백업.json';a.click()};
+$('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;
+ f.text().then(t=>{try{const o=JSON.parse(t);if(o.mem||o.db||o.rules){Object.assign(ST.mem,o.mem||{});Object.assign(ST.db,o.db||{});if(o.rules)ST.rules=o.rules;if(o.cat)ST.cat=o.cat}else Object.assign(ST.mem,o);save();dbn();syncRules();rulesUI();catUI();ST.grid.length&&run();alert('가져왔습니다.')}catch(x){alert('올바른 백업 파일이 아닙니다.')}});e.target.value=''};
+function rulesHtml(){const c=cnt(ST.M),v=viol(c);
+ return '<div class="iss" style="border-color:'+(v.length?'#c2410c':'#1e6b4e')+'"><b>분류별 횟수</b> <span class="sub">'+ST.rules.map(r=>r[0]+' '+(c[r[0]]||0)+'회').join(', ')+'</span><br>'+(v.length?'<span style="color:#c2410c;font-weight:600">규칙 위반: '+v.join(', ')+'</span>':'<span class="ok">모든 규칙을 지키고 있습니다</span>')+'</div>'}
+function rulesUI(){$('#rules').innerHTML='<table style="min-width:0;width:auto"><tr><th>분류</th><th>최소(회)</th><th>최대(회)</th></tr>'+ST.rules.map((r,i)=>`<tr><td class="l">${esc(r[0])}</td><td><input type="number" min="0" data-r="${i}" data-k="1" value="${r[1]}"></td><td><input type="number" min="0" data-r="${i}" data-k="2" value="${r[2]}"></td></tr>`).join('')+'</table>'}
+document.addEventListener('change',e=>{const d=e.target.dataset;if(d&&d.r!==undefined){const v=e.target.value;ST.rules[d.r][d.k]=v===''?'':+v;save();ST.grid.length&&run()}});
+const dbn=()=>$('#dbn').textContent=Object.keys(ST.db).length;
+function ingestDB(g,q){
+ const h=g[0].map(x=>String(x).trim()),ix=k=>h.findIndex(x=>x.includes(k)),a=ix('메뉴'),b=ix('재료'),c=ix('조리'),d=ix('종류');
+ if(a<0||b<0){alert('첫 줄에 "메뉴명"과 "주재료" 열이 필요합니다.');return}
+ let n=0;
+ g.slice(1).forEach(r=>{const name=clean(String(r[a]||'').trim());if(!name)return;
+  const tx=d>=0?String(r[d]||''):'';
+  ST.db[name]={i:String(r[b]||'').split(/[,，、/]/).map(x=>normI(x.trim())).filter(Boolean),m:c>=0?String(r[c]||'').trim():'',t:/국|탕|찌개/.test(tx)?'국':/부/.test(tx)?'부':'주'};n++});
+ save();dbn();ST.grid.length&&run();if(!q)alert(n+'개 메뉴를 등록했습니다.')}
+$('#rf').onchange=e=>{const f=e.target.files[0];if(!f)return;
+ if(typeof XLSX=='undefined'){alert('엑셀 읽기 모듈을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.');return}
+ const r=new FileReader();
+ r.onload=ev=>{const wb=XLSX.read(ev.target.result,{type:'array'});ingestDB(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''}))};
+ r.readAsArrayBuffer(f);e.target.value=''};
+$('#tpl').onclick=()=>{const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob(['\uFEFF메뉴명,주재료,조리법,종류\n제육볶음,돼지고기,볶음,주찬\n고등어구이,고등어,구이,주찬\n돈까스,돼지고기,튀김,주찬\n함박스테이크,소고기/돼지고기,구이,주찬\n북엇국,명태,국,국\n'],{type:'text/csv'}));
+ a.download='레시피DB_양식.csv';a.click()};
+$('#dbclr').onclick=()=>{if(confirm('등록한 레시피 DB를 모두 지울까요?')){ST.db={};save();dbn();ST.grid.length&&run()}};
+const syncRules=()=>{const cs=new Set(Object.values(ST.cat).filter(Boolean));cs.add('튀김');
+ cs.forEach(c=>{if(!ST.rules.some(r=>r[0]==c))ST.rules.push([c,0,''])});ST.rules=ST.rules.filter(r=>cs.has(r[0]))};
+function catUI(){
+ const all=new Set([...Object.keys(ST.cat),...D.map(d=>d[0]),...Object.values(ST.db).flatMap(d=>d.i)]);
+ $('#catlist').innerHTML=[...new Set(Object.values(ST.cat).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('');
+ $('#cats').innerHTML='<table style="min-width:0"><tr><th>재료</th><th>분류</th></tr>'+[...all].sort().map(i=>`<tr data-n="${esc(i)}"><td class="l">${esc(i)}</td><td><input type="text" list="catlist" data-ci="${esc(i)}" value="${esc(ST.cat[i]||'')}"></td></tr>`).join('')+'</table>'}
+const afterCat=()=>{save();syncRules();rulesUI();catUI();ST.grid.length&&run()};
+document.addEventListener('change',e=>{const i=e.target.dataset&&e.target.dataset.ci;if(i===undefined)return;
+ const v=e.target.value.trim();if(v)ST.cat[i]=v;else delete ST.cat[i];afterCat()});
+$('#ca').onclick=()=>{const n=normI($('#cn').value.trim()),c=$('#cc').value.trim();if(!n||!c)return;ST.cat[n]=c;$('#cn').value=$('#cc').value='';afterCat()};
+$('#cf').oninput=e=>{const q=e.target.value.trim();document.querySelectorAll('#cats tr[data-n]').forEach(r=>r.style.display=r.dataset.n.includes(q)?'':'none')};
+function parseCSV(t){t=t.replace(/^\uFEFF/,'');const R=[];let row=[],c='',q=false;
+ for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch=='"'){if(t[i+1]=='"'){c+='"';i++}else q=false}else c+=ch}
+  else if(ch=='"'&&!c)q=true;
+  else if(ch==','){row.push(c);c=''}
+  else if(ch=='\n'){row.push(c);R.push(row);row=[];c=''}
+  else if(ch!='\r')c+=ch}
+ row.push(c);R.push(row);return R.filter(r=>r.some(x=>x.trim()))}
+function ingestCat(g){
+ const h=g[0].map(x=>x.trim()),a=h.findIndex(x=>x.includes('재료')),b=h.findIndex(x=>x.includes('분류'));
+ if(a<0||b<0)throw new Error('cat');
+ g.slice(1).forEach(r=>{const i=normI((r[a]||'').trim()),c=(r[b]||'').trim();if(!i)return;if(c)ST.cat[i]=c;else delete ST.cat[i]});
+ afterCat()}
+async function pull(u){const r=await fetch(u);if(!r.ok)throw new Error('http');return parseCSV(await r.text())}
+async function sync(){
+ const u1=$('#u1').value.trim(),u2=$('#u2').value.trim(),st=$('#sm');
+ try{localStorage.setItem('mealurls',JSON.stringify([u1,u2]))}catch(e){}
+ if(!u1&&!u2){st.textContent='링크를 입력해 주세요.';return}
+ st.textContent='불러오는 중…';
+ try{
+  if(u2)ingestCat(await pull(u2));
+  if(u1)ingestDB(await pull(u1),1);
+  st.textContent='불러옴 '+new Date().toLocaleTimeString('ko-KR')+' · 레시피 '+Object.keys(ST.db).length+'개';
+ }catch(e){st.textContent='불러오지 못했습니다. "웹에 게시"한 CSV 링크인지, 첫 줄 열 이름이 맞는지 확인해 주세요.'}
+}
+$('#sy').onclick=sync;
+syncRules();rulesUI();catUI();dbn();
+try{const u=JSON.parse(localStorage.getItem('mealurls')||'[]');$('#u1').value=u[0]||'';$('#u2').value=u[1]||'';if(u[0]||u[1])sync()}catch(e){}
+</script></body></html>
