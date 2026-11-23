@@ -1,90 +1,177 @@
 <!doctype html>
-<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>식단표 중복 검수</title>
-<style>
-:root{--bg:#f2f5f1;--ink:#1d2a24;--sub:#5b6a62;--line:#d3dbd2;--ac:#1e6b4e;--card:#fff;--soft:#e2eee7}
-@media(prefers-color-scheme:dark){:root{--bg:#161d19;--ink:#e6eee9;--sub:#9fb0a6;--line:#2e3b34;--ac:#5cc79b;--card:#1f2823;--soft:#27372f}}
-*{box-sizing:border-box}[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif}
-header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
-.in{max-width:1180px;margin:auto;padding:10px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 28px}
-h1{font-size:18px;margin:0}nav{display:flex;gap:4px;flex-wrap:wrap}
-nav button{background:none;color:var(--sub);padding:7px 14px;font-weight:600}
-nav button[aria-selected=true]{background:var(--soft);color:var(--ac)}
-main{max-width:1180px;margin:auto;padding:18px 20px}
-.tab{display:none}.tab.on{display:block}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
-.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
-.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;align-items:start}
-.g2>.card{margin-bottom:0}.g2{margin-bottom:14px}
-.main{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
-.main:has(#panel:not([hidden])){grid-template-columns:minmax(0,1fr) 350px}
-@media(max-width:900px){.main:has(#panel:not([hidden])){grid-template-columns:minmax(0,1fr)}}
-#panel{position:sticky;top:64px;align-self:start;max-height:calc(100vh - 80px);overflow:auto}
-button,.btn{font:inherit;background:var(--ac);color:var(--card);border:0;border-radius:6px;padding:7px 12px;cursor:pointer}
-button.g,.btn.g{background:transparent;color:var(--ac);border:1px solid var(--ac)}
-.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
-input[type=text],input[type=number],textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
-input[type=number]{width:60px}textarea{width:100%;height:90px;margin:8px 0}
-details summary{cursor:pointer;color:var(--ac);font-weight:600;margin-top:10px}
-button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,.chip:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-.tip{width:20px;height:20px;border-radius:50%;padding:0;background:var(--soft);color:var(--ac);font-size:12px;font-weight:700;border:1px solid var(--line)}
-#tt{position:absolute;z-index:20;width:330px;max-width:calc(100vw - 16px);background:var(--ink);color:var(--bg);padding:10px 13px;border-radius:8px;font-size:13px;white-space:pre-line;box-shadow:0 4px 16px #0004}
-.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:640px}
-th,td{border:1px solid var(--line);padding:5px;vertical-align:top;text-align:left}th{background:var(--bg)}td.l{font-weight:600;white-space:nowrap;background:var(--bg)}
-.chip{display:block;margin:2px 0;padding:3px 7px;border-radius:5px;border:1px solid transparent;cursor:pointer;font-size:14px}
-.chip small{display:block;font-size:12px;opacity:.85}.chip.sel{outline:2px solid var(--ink)}
-.iss{border-left:5px solid;padding:6px 10px;margin:6px 0;background:var(--bg);border-radius:0 6px 6px 0}
-.alt{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
-.ok{color:var(--ac);font-weight:600}.sub{color:var(--sub);font-size:13px}
-</style></head><body>
-<header><div class="in"><h1>식단표 중복 검수</h1>
-<nav role="tablist"><button data-t="t1" aria-selected="true">식단표 검수</button><button data-t="t2" aria-selected="false">기준 설정</button><button data-t="t3" aria-selected="false">데이터 관리</button></nav></div></header>
-<main>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" media="(prefers-color-scheme: light)" content="oklch(98% 0.012 86)"><meta name="theme-color" media="(prefers-color-scheme: dark)" content="oklch(20% 0.018 85)"><link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<title>식단표 중복 검수</title><meta name="description" content="식단표의 식재료 중복과 분류별 주간 횟수를 확인하고 대체 메뉴를 살펴보세요.">
+<style>/* Hallmark · shape: Kitchen ledger · genre: modern-minimal (inferred) · theme: custom · job: try · idea: "A meal plan should read like a working kitchen ledger, with repeats surfaced directly in the grid." · vibe: precise, grounded, culinary, editorial, quietly confident
+ * paper: oklch(98% 0.012 86) · accent: oklch(56% 0.15 44) · display: Noto Serif KR · body: Pretendard · hero: working meal-plan grid · nav: compact tab rail · footer: none (app screen) · imagery: none · signature: ingredient repeats marked inside the actual plan
+ * axes: light/roman-serif/warm · posture: restrained · contrast: pass · fold: n/a (app screen) · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 · weakest: R, reduce utility chrome and let the meal grid carry the screen */
+@import url("./tokens.css");
+@import url("./base.css");
 
-<div class="tab on" id="t1">
+body { min-height: 100dvh; }
+header { position: sticky; z-index: 5; top: 0; background: var(--color-ink); color: var(--color-paper); border-bottom: 3px solid var(--color-accent); }
+.in { display: flex; align-items: center; justify-content: space-between; gap: var(--space-lg); width: min(100%, var(--container)); min-height: 76px; padding: var(--space-sm) var(--space-xl); margin-inline: auto; }
+h1 { color: var(--color-paper); font-size: 23px; letter-spacing: -0.035em; line-height: 1.2; text-wrap: balance; }
+nav[role="tablist"] { display: flex; align-items: center; gap: var(--space-xs); }
+nav button { position: relative; min-height: 44px; padding: 0 var(--space-md); border: 0; border-radius: var(--radius-control); background: transparent; color: var(--color-nav-muted); font-size: 14px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+nav button:hover { background: var(--color-nav-hover); color: var(--color-paper); }
+nav button[aria-selected="true"] { background: var(--color-paper); color: var(--color-ink); }
+nav button:active { transform: translateY(1px); }
+main { width: min(100%, var(--container)); margin: 0 auto; padding: var(--space-xl) var(--space-xl) var(--space-2xl); }
+.skip { position: fixed; z-index: 20; top: 8px; left: 8px; padding: var(--space-sm) var(--space-md); transform: translateY(-150%); border-radius: var(--radius-control); background: var(--color-paper); color: var(--color-ink); }
+.skip:focus { transform: translateY(0); }
+.tab { display: none; }.tab.on { display: block; }
+#t1 > .g2 { display: grid; grid-template-columns: minmax(0, 1.18fr) minmax(320px, .82fr); gap: 0 var(--space-xl); margin-bottom: 32px; padding: 0 0 var(--space-lg); border-bottom: 1px solid var(--color-rule); }
+.card { min-width: 0; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.card h2 { display: flex; align-items: center; gap: var(--space-sm); margin: 0 0 var(--space-md); color: var(--color-ink); font-size: 20px; letter-spacing: -0.025em; line-height: 1.25; }
+.card-note { max-width: 68ch; margin: calc(var(--space-xs) * -1) 0 var(--space-md); color: var(--color-ink-2); font-size: 14px; line-height: 1.65; }
+.guide-steps { display: grid; gap: var(--space-sm); margin: 0 0 var(--space-md); padding-left: 1.4rem; color: var(--color-ink-2); font-size: 14px; line-height: 1.65; }
+.guide-steps strong { color: var(--color-ink); }
+.g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); align-items: start; }
+.g2 > .card { margin: 0; }
+.g2:not(#t1 > .g2) { padding-top: var(--space-xs); }
+#t2 .card, #t3 .card { padding: var(--space-lg); border: 1px solid var(--color-rule); border-radius: var(--radius-card); background: color-mix(in oklab, var(--color-paper) 72%, var(--color-paper-2)); }
+#t2 .card h2, #t3 .card h2 { padding-bottom: var(--space-md); border-bottom: 1px solid var(--color-rule); }
+.main { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+.main:has(#panel:not([hidden])) { grid-template-columns: minmax(0, 1fr) minmax(300px, 360px); }
+#panel { position: sticky; top: 100px; align-self: start; max-height: calc(100dvh - 120px); overflow: auto; padding: var(--space-lg); border: 1px solid var(--color-rule); border-top: 3px solid var(--color-accent); border-radius: var(--radius-card); background: var(--color-paper); box-shadow: var(--shadow-raised); scroll-margin-top: 100px; }
+button, .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); min-height: 44px; padding: 0 var(--space-md); border: 1px solid var(--color-ink); border-radius: var(--radius-control); background: var(--color-ink); color: var(--color-paper); font: 600 14px/1.2 var(--font-body); white-space: nowrap; cursor: pointer; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out); }
+button:hover, .btn:hover { background: var(--color-ink-2); }
+button:active, .btn:active { transform: translateY(1px); }
+button:disabled, button[aria-disabled="true"], .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+button.g, .btn.g { border-color: var(--color-rule); background: transparent; color: var(--color-ink); }
+button.g:hover, .btn.g:hover { background: var(--color-paper-2); border-color: var(--color-ink-2); }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.row > * { min-width: 0; }
+.row label:not(.btn) { display: inline-flex; align-items: center; gap: var(--space-xs); color: var(--color-ink-2); font-size: 14px; }
+input[type="text"], input[type="number"], input[type="url"], textarea { max-width: 100%; min-height: 44px; padding: var(--space-xs) var(--space-sm); border: 1px solid var(--color-muted); border-radius: var(--radius-control); outline: 2px solid transparent; outline-offset: -3px; background: var(--color-paper); color: var(--color-ink); font: 16px/1.45 var(--font-body); }
+select { min-width: 150px; max-width: 100%; min-height: 44px; padding: var(--space-xs) 40px var(--space-xs) var(--space-sm); appearance: none; border: 1px solid var(--color-accent); border-radius: var(--radius-control); background-color: var(--color-paper); background-image: linear-gradient(45deg, transparent 50%, var(--color-ink-2) 50%), linear-gradient(135deg, var(--color-ink-2) 50%, transparent 50%); background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; background-repeat: no-repeat; background-size: 5px 5px, 5px 5px; color: var(--color-ink); font: 600 15px/1.3 var(--font-body); cursor: pointer; }
+select:hover { background-color: var(--color-paper-2); }
+select:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+input[type="text"]:hover, input[type="number"]:hover, input[type="url"]:hover, textarea:hover { background: var(--color-paper-2); }
+input[type="text"]:focus-visible, input[type="number"]:focus-visible, input[type="url"]:focus-visible, textarea:focus-visible { outline-color: var(--color-focus); }
+label.btn:focus-within { outline: 3px solid var(--color-focus); outline-offset: 3px; }
+.file-input { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+input[type="number"] { width: 72px; font-variant-numeric: tabular-nums; }
+textarea { width: 100%; min-height: 120px; margin: var(--space-sm) 0; resize: vertical; }
+input::placeholder, textarea::placeholder { color: var(--color-muted); opacity: 1; }
+input:disabled, textarea:disabled { opacity: .55; cursor: not-allowed; }
+details { margin-top: var(--space-md); }
+details summary { padding: var(--space-xs) 0; color: var(--color-ink); font-weight: 650; cursor: pointer; }
+.wrap { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-color: var(--color-rule) transparent; }
+table { width: 100%; border-collapse: collapse; border-spacing: 0; font-variant-numeric: tabular-nums; }
+th, td { padding: var(--space-sm); border: 0; border-bottom: 1px solid var(--color-rule); vertical-align: top; text-align: left; }
+tr:first-child th { border-top: 1px solid var(--color-rule); }
+th { background: var(--color-paper-2); color: var(--color-ink); font-size: 14px; font-weight: 700; white-space: nowrap; }
+td.l { background: transparent; color: var(--color-ink); font-weight: 700; white-space: nowrap; }
+.chip { display: block; width: 100%; min-height: 44px; margin: 0; padding: var(--space-xs); border: 1px solid transparent; border-radius: var(--radius-control); background: transparent; color: var(--color-ink); font-size: 14px; font-weight: 500; text-align: left; white-space: normal; overflow-wrap: anywhere; cursor: pointer; }
+.chip:hover { background: var(--color-paper-2); }
+.chip small { display: block; color: var(--color-ink-2); font-size: 13px; }
+.chip[style*="--issue-hue"] { border-color: hsl(var(--issue-hue) 55% 42%); background: var(--color-paper-2); }
+.chip.sel { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.iss { margin: var(--space-sm) 0; padding: var(--space-sm) var(--space-md); border: 1px solid var(--color-rule); border-radius: var(--radius-control); background: var(--color-paper-2); overflow-wrap: break-word; }
+.iss[style*="--issue-hue"] { border-color: hsl(var(--issue-hue) 55% 42%); }
+.alt { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--color-rule); }
+.alt > div { min-width: 0; overflow-wrap: break-word; }.ok { color: var(--color-success); font-weight: 700; }.sub { color: var(--color-ink-2); font-size: 14px; }
+#out > p:first-child { margin: 0 0 var(--space-lg); color: var(--color-ink-2); }
+#out > p.ok:first-child { color: var(--color-success); }
+#out > .wrap { margin-top: var(--space-lg); }
+#out table { min-width: 680px; }
+#rules table { width: auto; min-width: 0; }
+#rules input[type="number"] { width: 76px; }
+#cats { max-height: 340px; overflow: auto; margin-top: var(--space-sm); }
+#cats table { min-width: 0; }
+#cats td:first-child { min-width: 110px; }
+#cats select { width: 100%; min-width: 0; }
+.category-add { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(110px, 1fr) minmax(150px, 1fr) auto; align-items: center; }
+.category-add select { width: 100%; min-width: 0; }
+#t3 .row[style*="flex-direction"] { gap: var(--space-md); }
+#t3 .row[style*="flex-direction"] label { display: grid; gap: var(--space-xs); width: 100%; }
+#t3 .row[style*="flex-direction"] input { width: 100% !important; }
+#sm { min-height: 1lh; }
+[role="tab"], button, .btn { -webkit-tap-highlight-color: transparent; }
+@media (max-width: 900px) {
+  .in, main { padding-inline: var(--space-lg); }
+  #t1 > .g2 { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
+  #t2 .g2, #t3 .g2 { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); }
+  .main:has(#panel:not([hidden])) { grid-template-columns: minmax(0, 1fr); }
+  #panel { position: static; max-height: none; }
+}
+@media (max-width: 600px) {
+  header { position: static; }
+  .in { align-items: flex-start; flex-direction: column; gap: var(--space-sm); padding: var(--space-md); }
+  h1 { font-size: 20px; }
+  nav[role="tablist"] { width: 100%; overflow-x: auto; gap: var(--space-2xs); }
+  nav button { min-height: 44px; flex: 1 0 auto; padding-inline: var(--space-sm); font-size: 13px; }
+  main { padding: var(--space-lg) var(--space-md) 48px; }
+  #t1 > .g2 { gap: var(--space-lg); margin-bottom: var(--space-lg); padding-bottom: var(--space-lg); }
+  #t2 .card, #t3 .card { padding: var(--space-md); }
+  .category-add { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .category-add button { grid-column: 1 / -1; }
+  .row { align-items: stretch; }
+  .row > * { max-width: 100%; }
+  .alt { align-items: stretch; flex-direction: column; }
+  .alt button { width: 100%; }
+  .wrap { margin-inline: 0; }
+  #out table { min-width: 620px; }
+  #rules table { min-width: 0; }
+  #t3 .row:not([style*="flex-direction"]) { align-items: flex-start; }
+  #t3 .row:not([style*="flex-direction"]) input { width: calc(50% - 8px) !important; }
+  #t3 .row:not([style*="flex-direction"]) button { width: 100%; }
+}
+@media (prefers-color-scheme: dark) {
+  .chip[style*="--issue-hue"], .iss[style*="--issue-hue"] { border-color: hsl(var(--issue-hue) 55% 66%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}</style></head><body>
+<a class="skip" href="#main-content">본문으로 건너뛰기</a><header><div class="in"><h1>식단표 중복 검수</h1>
+<nav role="tablist" aria-label="주요 메뉴"><button id="tab-t1" role="tab" aria-controls="t1" tabindex="0" data-t="t1" aria-selected="true">식단표 검수</button><button id="tab-t2" role="tab" aria-controls="t2" tabindex="-1" data-t="t2" aria-selected="false">기준 설정</button><button id="tab-t3" role="tab" aria-controls="t3" tabindex="-1" data-t="t3" aria-selected="false">데이터 관리</button></nav></div></header>
+<main id="main-content">
+
+<div class="tab on" id="t1" role="tabpanel" aria-labelledby="tab-t1" tabindex="0">
 <div class="g2">
-<div class="card"><h2>식단표 불러오기 <button class="tip" type="button" aria-label="도움말" data-tip="첫 줄이 요일, 첫 칸이 구분(밥·국·주찬…)인 표여야 합니다.&#10;요일이 세로로 되어 있으면 '행·열 바꾸기'를 누르세요.&#10;한글(hwp)은 표를 드래그해 복사한 뒤 '붙여넣기로 불러오기'를 쓰면 됩니다.&#10;파일은 외부로 전송되지 않고 이 브라우저 안에서만 처리됩니다.">?</button></h2>
-<div class="row"><label class="btn">엑셀 파일 선택<input id="f" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+<div class="card"><h2>식단표 불러오기</h2><p class="card-note">첫 줄이 요일, 첫 칸이 구분(밥·국·주찬…)인 표여야 합니다.<br>요일이 세로로 되어 있으면 '행·열 바꾸기'를 누르세요.<br>한글(hwp)은 표를 드래그해 복사한 뒤 '붙여넣기로 불러오기'를 쓰면 됩니다.<br>파일은 외부로 전송되지 않고 이 브라우저 안에서만 처리됩니다.</p>
+<div class="row"><label class="btn">엑셀 파일 선택<input class="file-input" id="f" name="mealPlanFile" type="file" accept=".xlsx,.xls,.csv"></label>
 <button class="g" id="sample">예시로 해보기</button><button class="g" id="flip">행·열 바꾸기</button></div>
-<details><summary>붙여넣기로 불러오기</summary><textarea id="paste" placeholder="한글·엑셀에서 복사한 표를 붙여넣으세요"></textarea><button id="go">붙여넣은 표 불러오기</button></details></div>
-<div class="card"><h2>중복 기준 <button class="tip" type="button" aria-label="도움말" data-tip="같은 주재료가 한 주에 N회 이상이면 중복으로 표시합니다.&#10;같은 날·연속된 날 옵션을 켜면 더 엄격하게 검사합니다.&#10;분류별 횟수 규칙은 '기준 설정' 탭에서 정합니다.">?</button></h2>
-<div class="row"><label>같은 주재료 <input type="number" id="n" value="2" min="2"> 회 이상</label>
-<label><input type="checkbox" id="same" checked> 같은 날</label>
-<label><input type="checkbox" id="cons" checked> 연속된 날</label></div></div>
+<details><summary>붙여넣기로 불러오기</summary><textarea id="paste" name="mealPlanPaste" autocomplete="off" spellcheck="false" aria-label="식단표 붙여넣기" placeholder="한글·엑셀에서 복사한 표를 붙여넣으세요"></textarea><button id="go">붙여넣은 표 불러오기</button></details></div>
+<div class="card"><h2>중복 기준</h2><p class="card-note">같은 주재료가 한 주에 N회 이상이면 중복으로 표시합니다.<br>같은 날·연속된 날 옵션을 켜면 더 엄격하게 검사합니다.<br>분류별 횟수 규칙은 '기준 설정' 탭에서 정합니다.</p>
+<div class="row"><label>같은 주재료 <input type="number" id="n" name="repeatThreshold" autocomplete="off" value="2" min="2"> 회 이상</label>
+<label><input type="checkbox" id="same" name="sameDay" checked> 같은 날</label>
+<label><input type="checkbox" id="cons" name="consecutiveDays" checked> 연속된 날</label></div></div>
 </div>
 <div class="main"><div>
-<div class="card"><h2>검수 결과 <button class="tip" type="button" aria-label="도움말" data-tip="메뉴를 누르면 오른쪽에 재료 수정과 대체 메뉴 추천이 나옵니다.&#10;같은 색은 같은 재료(분류)가 겹친다는 뜻입니다.&#10;메뉴에 마우스를 올리면 중복 사유가 보입니다.">?</button></h2>
-<div id="out"><p class="sub">식단표를 불러오면 결과가 여기에 나타납니다.</p></div></div>
+<div class="card"><h2>검수 결과</h2><p class="card-note">메뉴를 선택하면 오른쪽에서 재료 수정과 대체 메뉴 추천을 볼 수 있습니다.<br>같은 색은 같은 재료(분류)가 겹친다는 뜻입니다.<br>메뉴를 선택하면 중복 사유도 확인할 수 있습니다.</p>
+<div id="out" aria-live="polite"><p class="sub">식단표를 불러오면 결과가 여기에 나타납니다.</p></div></div>
 <div class="card" id="unk" hidden></div>
 </div>
 <aside class="card" id="panel" hidden></aside></div>
 </div>
 
-<div class="tab" id="t2">
+<div class="tab" id="t2" role="tabpanel" aria-labelledby="tab-t2" tabindex="0">
 <div class="g2">
-<div class="card"><h2>분류별 주간 횟수 규칙 <button class="tip" type="button" aria-label="도움말" data-tip="한 주 동안 해당 분류의 메뉴가 몇 번 나와야 하는지 정합니다.&#10;비워 두면 제한하지 않습니다.&#10;대체 메뉴 추천에도 이 규칙이 적용됩니다.">?</button></h2>
+<div class="card"><h2>분류별 주간 횟수 규칙</h2><p class="card-note">한 주 동안 해당 분류의 메뉴가 몇 번 나와야 하는지 정합니다.<br>비워 두면 제한하지 않습니다.<br>대체 메뉴 추천에도 이 규칙이 적용됩니다.</p>
 <div class="wrap" id="rules"></div></div>
-<div class="card"><h2>재료 분류 편집 <button class="tip" type="button" aria-label="도움말" data-tip="재료가 어느 분류(생선류, 육류 등)에 속하는지 정합니다.&#10;새 분류 이름을 쓰면 왼쪽 규칙 표에 자동으로 추가됩니다.&#10;분류를 비우면 분류하지 않습니다.">?</button></h2>
-<div class="row"><input type="text" id="cf" placeholder="재료 검색" size="10"><input type="text" id="cn" placeholder="새 재료" size="10"><input type="text" id="cc" list="catlist" placeholder="분류" size="10"><button id="ca">추가</button></div>
-<datalist id="catlist"></datalist>
+<div class="card"><h2>재료 분류 편집</h2><p class="card-note">재료별 분류를 선택해 바꾸세요. 새 분류를 만들려면 ‘새 분류 입력’을 선택한 뒤 이름을 적으세요.<br>분류를 비우면 분류하지 않고, 새 분류는 왼쪽 규칙 표에 자동으로 추가됩니다.</p>
+<div class="row category-add"><input type="text" id="cf" name="ingredientSearch" autocomplete="off" aria-label="재료 검색" placeholder="재료 검색" size="10"><input type="text" id="cn" name="newIngredient" autocomplete="off" aria-label="새 재료" placeholder="새 재료" size="10"><select id="cc" name="newCategory" aria-label="분류 선택"><option value="">분류 선택</option><option value="__new__">새 분류 입력…</option></select><input type="text" id="ccNew" name="customCategory" autocomplete="off" aria-label="새 분류 이름" placeholder="새 분류 이름" hidden><button id="ca">추가</button></div>
 <div class="wrap" id="cats" style="max-height:340px;overflow:auto;margin-top:8px"></div></div>
 </div></div>
 
-<div class="tab" id="t3">
+<div class="tab" id="t3" role="tabpanel" aria-labelledby="tab-t3" tabindex="0">
 <div class="g2">
-<div class="card"><h2>구글 스프레드시트 연결 <button class="tip" type="button" aria-label="도움말" data-tip="1) 시트에 탭 2개 만들기&#10;   레시피: 메뉴명 | 주재료 | 조리법 | 종류&#10;   재료분류: 재료 | 분류&#10;2) 파일 → 공유 → 웹에 게시&#10;3) 탭 하나 선택, 형식을 CSV로 → 게시 → 링크 복사 (탭마다 반복)&#10;4) 아래 칸에 붙여넣고 '시트에서 불러오기'&#10;※ 앱은 시트를 읽기만 합니다.&#10;※ 게시된 시트는 링크를 아는 누구나 볼 수 있으니 개인정보는 넣지 마세요.">?</button></h2>
+<div class="card"><h2>구글 스프레드시트 연결</h2><p class="card-note">시트는 읽기만 합니다. 게시한 시트는 링크를 아는 누구나 볼 수 있으니 개인정보는 넣지 마세요.</p><ol class="guide-steps"><li><strong>시트 탭 2개 만들기:</strong> 레시피 탭은 메뉴명·주재료·조리법·종류, 재료분류 탭은 재료·분류 열로 구성합니다.</li><li><strong>웹에 게시:</strong> 파일 메뉴에서 공유한 뒤 웹에 게시를 선택합니다.</li><li><strong>CSV 링크 복사:</strong> 탭별로 CSV 형식을 선택해 게시하고 링크를 복사합니다.</li><li><strong>연결:</strong> 아래 입력란에 두 링크를 붙여 넣고 시트에서 불러오기를 누릅니다.</li></ol>
 <div class="row" style="flex-direction:column;align-items:stretch">
-<label>레시피 탭 링크 <input type="text" id="u1" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label>
-<label>재료 분류 탭 링크 <input type="text" id="u2" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label></div>
-<div class="row" style="margin-top:10px"><button id="sy">시트에서 불러오기</button><span id="sm" class="sub"></span></div></div>
-<div class="card"><h2>레시피 DB 엑셀 등록 <button class="tip" type="button" aria-label="도움말" data-tip="엑셀(.xlsx) 또는 UTF-8 CSV로 메뉴를 한꺼번에 등록합니다.&#10;열 이름: 메뉴명, 주재료, 조리법, 종류(주찬/부찬/국)&#10;재료가 여러 개면 / 또는 쉼표로 구분합니다.&#10;'양식 내려받기'로 예시 파일을 받을 수 있습니다.">?</button></h2>
+<label>레시피 탭 링크 <input type="url" id="u1" name="recipeSheetUrl" autocomplete="off" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label>
+<label>재료 분류 탭 링크 <input type="url" id="u2" name="ingredientCategorySheetUrl" autocomplete="off" style="width:100%" placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv"></label></div>
+<div class="row" style="margin-top:10px"><button id="sy">시트에서 불러오기</button><span id="sm" class="sub" aria-live="polite"></span></div></div>
+<div class="card"><h2>레시피 DB 엑셀 등록</h2><p class="card-note">엑셀(.xlsx) 또는 UTF-8 CSV로 메뉴를 한꺼번에 등록합니다.<br>열 이름: 메뉴명, 주재료, 조리법, 종류(주찬/부찬/국)<br>재료가 여러 개면 / 또는 쉼표로 구분합니다.<br>'양식 내려받기'로 예시 파일을 받을 수 있습니다.</p>
 <p class="sub" style="margin-top:0">등록된 메뉴 <b id="dbn">0</b>개</p>
-<div class="row"><label class="btn">엑셀 올리기<input id="rf" type="file" accept=".xlsx,.xls,.csv" hidden></label>
+<div class="row"><label class="btn">엑셀 올리기<input class="file-input" id="rf" name="recipeDbFile" type="file" accept=".xlsx,.xls,.csv"></label>
 <button class="g" id="tpl">양식 내려받기</button><button class="g" id="dbclr">DB 비우기</button></div></div>
-<div class="card"><h2>백업 · 복원 <button class="tip" type="button" aria-label="도움말" data-tip="레시피 DB, 규칙, 재료 분류, 직접 입력한 메뉴 재료가 모두 담깁니다.&#10;이 정보는 브라우저에 저장되므로, 브라우저 데이터를 지우기 전에 내보내기로 백업하세요.">?</button></h2>
+<div class="card"><h2>백업 · 복원</h2><p class="card-note">레시피 DB, 규칙, 재료 분류, 직접 입력한 메뉴 재료가 모두 담깁니다.<br>이 정보는 브라우저에 저장되므로, 브라우저 데이터를 지우기 전에 내보내기로 백업하세요.</p>
 <div class="row"><button class="g" id="exp">내보내기</button>
-<label class="btn g">가져오기<input id="imp" type="file" accept=".json" hidden></label></div></div>
+<label class="btn g">가져오기<input class="file-input" id="imp" name="backupImportFile" type="file" accept=".json"></label></div></div>
 </div></div>
 
 </main>
@@ -161,15 +248,15 @@ function run(){
  const grp={};ST.iss.forEach(x=>{const o=grp[x.ing]=grp[x.ing]||{w:new Set(),m:new Set()};o.w.add(x.why);x.ms.forEach(m=>o.m.add(m))});
  for(const ing in grp){const hu=hue(ing);
   const list=[...grp[ing].m].sort((a,b)=>a.c-b.c).map(m=>g[0][m.c]+' '+esc(m.name)).join(', ');
-  h+=`<div class="iss" style="border-color:hsl(${hu} 55% 42%)"><b>${esc(ing)}</b> <span class="sub">${[...grp[ing].w].join(', ')}</span><br>${list}</div>`}
- h+=rulesHtml()+'<div class="wrap"><table><tr>'+g[0].map(x=>`<th>${esc(x)}</th>`).join('')+'</tr>';
+  h+=`<div class="iss" style="--issue-hue:${hu}"><b>${esc(ing)}</b> <span class="sub">${[...grp[ing].w].join(', ')}</span><br>${list}</div>`}
+ h+=rulesHtml()+'<div class="wrap"><table><tr>'+g[0].map(x=>`<th scope="col">${esc(x)}</th>`).join('')+'</tr>';
  for(let r=1;r<g.length;r++){
-  h+=`<tr><td class="l">${esc(g[r][0])}</td>`;
+  h+=`<tr><th class="l" scope="row">${esc(g[r][0])}</th>`;
   for(let c=1;c<g[0].length;c++){
    h+='<td>'+ST.M.map((m,i)=>[m,i]).filter(([m])=>m.r==r&&m.c==c).map(([m,i])=>{
     const b=m.why.length,hu=b?hue(m.why[0].split(' · ')[0]):0;
-    const st=b?`background:hsl(${hu} 80% 86%);border-color:hsl(${hu} 55% 42%);color:#1d2a24`:'';
-    return `<div class="chip${ST.sel==i?' sel':''}" tabindex="0" data-i="${i}" style="${st}" title="${esc(m.why.join('\n'))}">${esc(m.name)}${b?`<small>${esc(m.ings.join(', '))}</small>`:''}</div>`}).join('')+'</td>'}
+    const st=b?`--issue-hue:${hu}`:'';
+ return `<div class="chip${ST.sel==i?' sel':''}" role="button" tabindex="0" data-i="${i}" style="${st}">${esc(m.name)}${b?`<small>${esc(m.ings.join(', '))}</small>`:''}</div>`}).join('')+'</td>'}
   h+='</tr>'}
  $('#out').innerHTML=h+'</table></div>';
  const un=[...new Set(ST.M.filter(m=>!known(m.name)).map(m=>m.name))];
@@ -188,12 +275,12 @@ function panel(){
   .sort((a,b)=>a.v.length-b.v.length||b.h.length-a.h.length||a.o.length-b.o.length).slice(0,5);
  p.hidden=false;
  p.innerHTML=`<h2>${esc(ST.grid[0][m.c])} · ${esc(ST.grid[m.r][0])}</h2>
- <div class="row"><label>메뉴명 <input type="text" id="pn" value="${esc(m.name)}"></label>
- <label>주재료(쉼표로 구분) <input type="text" id="pi" value="${esc(m.ings.join(', '))}"></label>
+ <div class="row"><label>메뉴명 <input type="text" id="pn" name="menuName" autocomplete="off" value="${esc(m.name)}"></label>
+ <label>주재료(쉼표로 구분) <input type="text" id="pi" name="menuIngredients" autocomplete="off" value="${esc(m.ings.join(', '))}"></label>
  <button id="ps">저장</button></div>
  <p class="sub">${m.why.length?esc([...new Set(m.why)].join(' / ')):'중복 없음'}. 재료가 없는 메뉴는 비워 두고 저장하세요.</p>
  <h2 style="margin-top:12px">대체 메뉴 추천 (${t=='주'?'주찬':t=='부'?'부찬':'국'})</h2>`+
- (alts.map(a=>`<div class="alt"><div><b>${esc(a.n)}</b> <span class="sub">${a.i.length?esc(a.i.join(', ')):'주재료 없음'}</span><br>${a.o.length?`<span class="sub">이번 주 사용 재료와 겹침: ${esc(a.o.join(', '))}</span>`:'<span class="ok">이번 주 재료와 겹치지 않음</span>'}${a.v.length?`<br><span style="color:#c2410c">규칙 위반: ${esc(a.v.join(', '))}</span>`:''}${a.h.length?`<br><span class="ok">부족한 ${esc(a.h.join(', '))} 보충</span>`:''}</div><button class="g" data-alt="${esc(a.n)}">이 메뉴로 교체</button></div>`).join('')||'<p class="sub">추천할 메뉴가 없습니다.</p>');
+ (alts.map(a=>`<div class="alt"><div><b>${esc(a.n)}</b> <span class="sub">${a.i.length?esc(a.i.join(', ')):'주재료 없음'}</span><br>${a.o.length?`<span class="sub">이번 주 사용 재료와 겹침: ${esc(a.o.join(', '))}</span>`:'<span class="ok">이번 주 재료와 겹치지 않음</span>'}${a.v.length?`<br><span style="color:var(--color-error)">규칙 위반: ${esc(a.v.join(', '))}</span>`:''}${a.h.length?`<br><span class="ok">부족한 ${esc(a.h.join(', '))} 보충</span>`:''}</div><button class="g" data-alt="${esc(a.n)}">이 메뉴로 교체</button></div>`).join('')||'<p class="sub">추천할 메뉴가 없습니다.</p>');
 }
 function setName(m,name){
  const lines=ST.grid[m.r][m.c].split('\n');lines[m.li]=name;ST.grid[m.r][m.c]=lines.join('\n');
@@ -210,7 +297,7 @@ document.addEventListener('click',e=>{
   const idx=ST.M.length;ST.sel=null;run();
  }
 });
-document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.classList.contains('chip'))e.target.click()});
+document.addEventListener('keydown',e=>{if(e.target.classList.contains('chip')&&(e.key=='Enter'||e.key==' ')){e.preventDefault();e.target.click()}});
 ['n','same','cons'].forEach(id=>$('#'+id).addEventListener('change',()=>ST.grid.length&&run()));
 $('#f').onchange=e=>{
  const f=e.target.files[0];if(!f)return;
@@ -234,8 +321,8 @@ $('#exp').onclick=()=>{const a=document.createElement('a');
 $('#imp').onchange=e=>{const f=e.target.files[0];if(!f)return;
  f.text().then(t=>{try{const o=JSON.parse(t);if(o.mem||o.db||o.rules){Object.assign(ST.mem,o.mem||{});Object.assign(ST.db,o.db||{});if(o.rules)ST.rules=o.rules;if(o.cat)ST.cat=o.cat}else Object.assign(ST.mem,o);save();dbn();syncRules();rulesUI();catUI();ST.grid.length&&run();alert('가져왔습니다.')}catch(x){alert('올바른 백업 파일이 아닙니다.')}});e.target.value=''};
 function rulesHtml(){const c=cnt(ST.M),v=viol(c);
- return '<div class="iss" style="border-color:'+(v.length?'#c2410c':'#1e6b4e')+'"><b>분류별 횟수</b> <span class="sub">'+ST.rules.map(r=>r[0]+' '+(c[r[0]]||0)+'회').join(', ')+'</span><br>'+(v.length?'<span style="color:#c2410c;font-weight:600">규칙 위반: '+v.join(', ')+'</span>':'<span class="ok">모든 규칙을 지키고 있습니다</span>')+'</div>'}
-function rulesUI(){$('#rules').innerHTML='<table style="min-width:0;width:auto"><tr><th>분류</th><th>최소(회)</th><th>최대(회)</th></tr>'+ST.rules.map((r,i)=>`<tr><td class="l">${esc(r[0])}</td><td><input type="number" min="0" data-r="${i}" data-k="1" value="${r[1]}"></td><td><input type="number" min="0" data-r="${i}" data-k="2" value="${r[2]}"></td></tr>`).join('')+'</table>'}
+ return '<div class="iss" style="border-color:'+(v.length?'var(--color-error)':'var(--color-success)')+'"><b>분류별 횟수</b> <span class="sub">'+ST.rules.map(r=>r[0]+' '+(c[r[0]]||0)+'회').join(', ')+'</span><br>'+(v.length?'<span style="color:var(--color-error);font-weight:600">규칙 위반: '+v.join(', ')+'</span>':'<span class="ok">모든 규칙을 지키고 있습니다</span>')+'</div>'}
+function rulesUI(){$('#rules').innerHTML='<table style="min-width:0;width:auto"><tr><th scope="col">분류</th><th scope="col">최소(회)</th><th scope="col">최대(회)</th></tr>'+ST.rules.map((r,i)=>`<tr><th class="l" scope="row">${esc(r[0])}</th><td><input type="number" min="0" name="ruleMin${i}" autocomplete="off" aria-label="${esc(r[0])} 최소 횟수" data-r="${i}" data-k="1" value="${r[1]}"></td><td><input type="number" min="0" name="ruleMax${i}" autocomplete="off" aria-label="${esc(r[0])} 최대 횟수" data-r="${i}" data-k="2" value="${r[2]}"></td></tr>`).join('')+'</table>'}
 document.addEventListener('change',e=>{const d=e.target.dataset;if(d&&d.r!==undefined){const v=e.target.value;ST.rules[d.r][d.k]=v===''?'':+v;save();ST.grid.length&&run()}});
 const dbn=()=>$('#dbn').textContent=Object.keys(ST.db).length;
 function ingestDB(g,q){
@@ -259,12 +346,14 @@ const syncRules=()=>{const cs=new Set(Object.values(ST.cat).filter(Boolean));cs.
  cs.forEach(c=>{if(!ST.rules.some(r=>r[0]==c))ST.rules.push([c,0,''])});ST.rules=ST.rules.filter(r=>cs.has(r[0]))};
 function catUI(){
  const all=new Set([...Object.keys(ST.cat),...D.map(d=>d[0]),...Object.values(ST.db).flatMap(d=>d.i)]);
- $('#catlist').innerHTML=[...new Set(Object.values(ST.cat).filter(Boolean))].map(c=>`<option value="${esc(c)}">`).join('');
- $('#cats').innerHTML='<table style="min-width:0"><tr><th>재료</th><th>분류</th></tr>'+[...all].sort().map(i=>`<tr data-n="${esc(i)}"><td class="l">${esc(i)}</td><td><input type="text" list="catlist" data-ci="${esc(i)}" value="${esc(ST.cat[i]||'')}"></td></tr>`).join('')+'</table>'}
+ const categories=[...new Set([...Object.values(ST.cat),...ST.rules.map(r=>r[0])].filter(Boolean))].sort();
+ $('#cc').innerHTML='<option value="">분류 선택</option>'+categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+'<option value="__new__">새 분류 입력…</option>';
+ $('#cats').innerHTML='<table style="min-width:0"><tr><th scope="col">재료</th><th scope="col">분류</th></tr>'+[...all].sort().map(i=>`<tr data-n="${esc(i)}"><th class="l" scope="row">${esc(i)}</th><td><select name="ingredientCategory" aria-label="${esc(i)} 분류" data-ci="${esc(i)}"><option value="">분류 없음</option>${categories.map(c=>`<option value="${esc(c)}"${ST.cat[i]===c?' selected':''}>${esc(c)}</option>`).join('')}</select></td></tr>`).join('')+'</table>'}
 const afterCat=()=>{save();syncRules();rulesUI();catUI();ST.grid.length&&run()};
 document.addEventListener('change',e=>{const i=e.target.dataset&&e.target.dataset.ci;if(i===undefined)return;
  const v=e.target.value.trim();if(v)ST.cat[i]=v;else delete ST.cat[i];afterCat()});
-$('#ca').onclick=()=>{const n=normI($('#cn').value.trim()),c=$('#cc').value.trim();if(!n||!c)return;ST.cat[n]=c;$('#cn').value=$('#cc').value='';afterCat()};
+$('#cc').onchange=()=>{$('#ccNew').hidden=$('#cc').value!='__new__';if($('#cc').value!='__new__')$('#ccNew').value=''};
+$('#ca').onclick=()=>{const n=normI($('#cn').value.trim()),c=$('#cc').value=='__new__'?$('#ccNew').value.trim():$('#cc').value.trim();if(!n||!c)return;ST.cat[n]=c;$('#cn').value='';$('#cc').value='';$('#ccNew').value='';$('#ccNew').hidden=true;afterCat()};
 $('#cf').oninput=e=>{const q=e.target.value.trim();document.querySelectorAll('#cats tr[data-n]').forEach(r=>r.style.display=r.dataset.n.includes(q)?'':'none')};
 function parseCSV(t){t=t.replace(/^\uFEFF/,'');const R=[];let row=[],c='',q=false;
  for(let i=0;i<t.length;i++){const ch=t[i];
@@ -294,13 +383,13 @@ async function sync(){
 $('#sy').onclick=sync;
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x==b));
+ document.querySelectorAll('nav button').forEach(x=>x.tabIndex=x==b?0:-1);
  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==b.dataset.t))});
-const tt=document.createElement('div');tt.id='tt';tt.hidden=true;document.body.appendChild(tt);
-document.addEventListener('click',e=>{const t=e.target.closest('.tip');
- if(!t||(!tt.hidden&&tt.dataset.o==t.dataset.tip)){tt.hidden=true;tt.dataset.o='';return}
- tt.textContent=t.dataset.tip;tt.dataset.o=t.dataset.tip;tt.hidden=false;
- const r=t.getBoundingClientRect();tt.style.top=(r.bottom+scrollY+6)+'px';
- tt.style.left=Math.max(8,Math.min(r.left+scrollX,innerWidth-346))+'px'},true);
+document.querySelector('nav[role="tablist"]').addEventListener('keydown',e=>{
+ const tabs=[...document.querySelectorAll('nav [role="tab"]')],i=tabs.indexOf(e.target);if(i<0)return;
+ let n;if(e.key=='ArrowRight')n=(i+1)%tabs.length;else if(e.key=='ArrowLeft')n=(i+tabs.length-1)%tabs.length;else if(e.key=='Home')n=0;else if(e.key=='End')n=tabs.length-1;else return;
+ e.preventDefault();tabs[n].focus();tabs[n].click()
+});
 syncRules();rulesUI();catUI();dbn();
 try{const u=JSON.parse(localStorage.getItem('mealurls')||'[]');$('#u1').value=u[0]||'';$('#u2').value=u[1]||'';if(u[0]||u[1])sync()}catch(e){}
 </script></body></html>
