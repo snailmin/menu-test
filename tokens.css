@@ -1,0 +1,59 @@
+/* Hallmark · shape: Kitchen ledger · genre: modern-minimal (inferred) · theme: custom · job: try · idea: "A meal plan should read like a working kitchen ledger, with repeats surfaced directly in the grid." · vibe: precise, grounded, culinary, editorial, quietly confident
+ * paper: oklch(98% 0.012 86) · accent: oklch(56% 0.15 44) · display: Noto Serif KR · body: Pretendard · hero: working meal-plan grid · nav: compact tab rail · footer: none (app screen) · imagery: none · signature: ingredient repeats marked inside the actual plan
+ * axes: light/roman-serif/warm · posture: restrained · contrast: pass · fold: n/a (app screen) · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V4 · weakest: R, reduce utility chrome and let the meal grid carry the screen */
+:root {
+  color-scheme: light;
+  --color-paper: oklch(98% 0.012 86);
+  --color-paper-2: oklch(95% 0.018 82);
+  --color-paper-3: oklch(91% 0.022 78);
+  --color-ink: oklch(25% 0.025 90);
+  --color-ink-2: oklch(43% 0.02 88);
+  --color-muted: oklch(55% 0.02 83);
+  --color-rule: oklch(86% 0.016 82);
+  --color-accent: oklch(56% 0.15 44);
+  --color-accent-ink: oklch(98% 0.006 85);
+  --color-focus: oklch(68% 0.16 52);
+  --color-nav-muted: oklch(85% 0.012 88);
+  --color-nav-hover: oklch(33% 0.025 88);
+  --color-error: oklch(53% 0.19 28);
+  --color-success: oklch(43% 0.09 155);
+  --font-display: "Noto Serif KR", "Batang", serif;
+  --font-body: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-card: 10px;
+  --radius-control: 6px;
+  --container: 1500px;
+  --shadow-raised: 0 14px 38px oklch(25% 0.025 85 / 0.13);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-paper: oklch(20% 0.018 85);
+    --color-paper-2: oklch(26% 0.02 82);
+    --color-paper-3: oklch(32% 0.022 78);
+    --color-ink: oklch(94% 0.012 88);
+    --color-ink-2: oklch(78% 0.018 88);
+    --color-muted: oklch(68% 0.018 85);
+    --color-rule: oklch(40% 0.018 82);
+    --color-accent: oklch(76% 0.12 55);
+    --color-accent-ink: oklch(23% 0.02 85);
+    --color-focus: oklch(84% 0.13 80);
+    --color-nav-muted: oklch(83% 0.012 88);
+    --color-nav-hover: oklch(33% 0.025 88);
+    --color-error: oklch(73% 0.15 28);
+    --color-success: oklch(77% 0.1 155);
+    --shadow-raised: 0 14px 38px oklch(5% 0.01 85 / 0.48);
+  }
+}
